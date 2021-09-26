@@ -9,5 +9,5 @@
 
 # arduino-pdr
 > arduino代码
-> - arduino uno 用于接收MPU9250传感器数据
+> - MPU9250GetData 用于接收MPU9250传感器数据
 > - arduino esp8266 使用软串口与uno进行连接，将传感器数据以WiFi发送至阿里云

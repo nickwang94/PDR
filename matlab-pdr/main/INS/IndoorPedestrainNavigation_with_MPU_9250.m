@@ -1,23 +1,19 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% 时间：2017-03-20
-%% 功能：通过卡尔曼滤波+零速率更新实现行人追踪系统
-%%      使用三个条件同时判断是否静止
-%%      同时使用ZARU+HDR+Compass进行偏航角矫正
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% 模型建立：
-%% 误差状态矩阵 : delta_x = [delta_fai,  delta_w,   delta_r,   delta_v,  delta_a];
-%%                          姿态误差    加速度偏差   位置误差    速度误差    陀螺仪偏差
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% 
+% 时间：2017-03-20
+% 功能：通过卡尔曼滤波+零速率更新实现行人追踪系统
+%      使用三个条件同时判断是否静止
+%      同时使用ZARU+HDR+Compass进行偏航角矫正
+%
+% 模型建立：
+% 误差状态矩阵 : delta_x = [delta_fai,  delta_w,   delta_r,   delta_v,  delta_a];
+%                          姿态误差    加速度偏差   位置误差    速度误差    陀螺仪偏差
 
 %清空内存数据
-clear;
+clear;clc;
 
 %%读取数据
-DataRoot = '../DataCollection/';
-Operator = {'Chongshuai R/Data/';'Wenkun W/Data/';'Wu L/Data/'};
-Shapes = {'line/'; 'rightAngle/'; 'static/'}; 
-Path = [DataRoot, char(Operator(2)), char(Shapes(2)), 'rightAngle_7.txt']
-data = load(Path);
+path = "data/angle_back1.txt";
+data = load(path);
 timestamp = data(:,1);
 datasize = length(timestamp);
 
@@ -42,19 +38,15 @@ C = [cos(pitch)*cos(yaw)    (sin(roll)*sin(pitch)*cos(yaw))-(cos(roll)*sin(yaw))
 C_pre = C;
 
 % 从文件中读取bias
-fid=fopen('bias.txt','r');
-bias_data=[];
-while 1
-    tline=fgetl(fid);
-    if ~ischar(tline),break;end
-    tline=str2num(tline);
-    bias_data=[bias_data;tline];
-end
-fclose(fid);
+% fid = load('bias.txt');
+% bias_data(1:3) = fid(1,:);
+% bias_data(4:6) = fid(2,:);
+bias_data = [0, 0, 0, 0, 0, 9.8];
+
 % 卡尔曼矩阵参数
 delta_x = zeros(15,1);
 delta_x(4:6) = [bias_data(1); bias_data(2); bias_data(3);];
-delta_x(13:15) = [bias_data(4); bias_data(5); bias_data(6)-g;];
+delta_x(13:15) = [bias_data(4); bias_data(5); bias_data(6) - g;];
 
 %误差矩阵，diagonal 15x15 matrix
 %如果P为1，则Gk为1，使用观测值来代表当前的预测值
@@ -111,7 +103,6 @@ for t = 2:datasize
     % first phase:陀螺仪、加速度去除零偏差
     gyro_s1 = gyro_s(:,t) - delta_x(4:6);
     
-    
     % second phase:角速率反对称矩阵
     delta_omiga = [0           -gyro_s1(3)     gyro_s1(2);
                    gyro_s1(3)   0             -gyro_s1(1);
@@ -126,7 +117,7 @@ for t = 2:datasize
     yaw = atan(C(2,1)/C(1,1));
     
     %third phase:加速度转换框架
-    acc_n(:,t) = 0.5*(C + C_pre)*(acc_s(:,t)-delta_x(13:15));
+    acc_n(:,t) = 0.5*(C + C_pre) * (acc_s(:,t) - delta_x(13:15));
     
     %fourth phase:加速度积分获得速度
     vel_n(:,t) = vel_n(:,t-1) + (acc_n(:,t) - [0; 0; g] )*dt;

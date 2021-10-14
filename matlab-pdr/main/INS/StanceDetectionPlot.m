@@ -1,42 +1,39 @@
 clear;
-data_acc = load('acc.txt');
-data_gyro = load('gyro.txt');
-datasize_acc = length(data_acc);
-timestamp_acc = data_acc(:,1);
-timestamp_gyro = data_gyro(:,1);
-acc_s = data_acc(:,2:4)';
-gyro_s = data_gyro(:,2:4);
-gyro_s = interp1(timestamp_gyro, gyro_s, timestamp_acc, 'spline' ,'extrap')';
+data = load('data/line1.txt');
+datasize = length(data);
+timestamp = data(:,1);
+acc_s = data(:,2:4)';
+gyro_s = data(:,5:7)';
 
-c1_condition = zeros(1,datasize_acc);
-c2_condition = zeros(1,datasize_acc);
-c3_condition = zeros(1,datasize_acc);
-condition = zeros(1,datasize_acc);
-condition_madfilt = zeros(1,datasize_acc);
+c1_condition = zeros(1,datasize);
+c2_condition = zeros(1,datasize);
+c3_condition = zeros(1,datasize);
+condition = zeros(1,datasize);
+condition_madfilt = zeros(1,datasize);
 
 %C1
-for i=1:datasize_acc
+for i = 1:datasize
     if(C1(acc_s(:,i)) == 1)
         c1_condition(i) = 1;
     end
 end
 
 %C2
-for i=1:datasize_acc
-    if(C2(acc_s,i, datasize_acc) == 1)
+for i = 1:datasize
+    if(C2(acc_s,i, datasize) == 1)
         c2_condition(i) = 1;
     end
 end
 
 %C3
-for i=1:datasize_acc
+for i = 1:datasize
     if(C3(gyro_s(:,i)) == 1)
         c3_condition(i) = 1;
     end
 end
 
-%C1&&C2&&C3
-for i=1:datasize_acc
+%C1 && C2 && C3
+for i = 1:datasize
     if(c1_condition(i) == 1 && c2_condition(i) == 1 && c3_condition(i) == 1)
         condition(i) = 1;
     end
